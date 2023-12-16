@@ -12,7 +12,7 @@ router.post("/",requireSignIn,isAdmin,createProduct)
 // router.post("/createproduct",createproduct)
 
 //GET Single PRODUCTS
-router.get("/",getAllProduct);
+router.get("/allproduct",getAllProduct);
 
 //GET SINGLE-PRODUCT
 router.get("/:id",getaProduct);

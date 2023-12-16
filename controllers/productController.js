@@ -1,324 +1,112 @@
-// import slugify from "slugify";
+const { ObjectId } = require("mongodb");
 const productModel = require("../models/productModel.js");
-// import categoryModel from "../models/categoryModel.js";
-//import fs from 'fs';      //file system
+// const userCollection = require("../models/userModel");
+const asyncHandler = require("express-async-handler");
+const slugify = require("slugify");
+// const validateMongoDbId = require("../utils/validateMongodbId");
 
-
-const createproduct=async(req,resp)=>{
-    const {productTitle,category,price,product,description,quantity,brand,imageOne,imageTwo, imageThree,rating}=req.body
-    const find= await productModel.find()
-    if(find){
-       const  productdata=new productModel({
-            productTitle:productTitle,
-            category:category,
-            price:price,
-            product:product,
-            description:description,
-            quantity:quantity,
-            brand:brand,
-            imageOne:imageOne,
-            imageTwo:imageTwo,
-            imageThree:imageThree,
-            rating:rating
-       })
-
-       await productdata.save()
-       resp.json({sucess:true,message:'data created'})
+const createProduct = asyncHandler(async (req, res) => {
+  try {
+    if (req.body.title) {
+      req.body.slug = slugify(req.body.title);
     }
-    else{
-        resp.json({sucess:false,message:'server error'})
+    const newProduct = await productModel.create(req.body);
+    res.json(newProduct);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+//update a product
+const updateProduct = asyncHandler(async (req, res) => {
+  const id = req.params;
+  // validateMongoDbId(id);
+  try {
+    if (req.body.title) {
+      req.body.slug = slugify(req.body.title);
     }
+    const updateProduct = await productModel.findOneAndUpdate(
+      { id },
+      req.body,
+      {
+        new: true,
+      }
+    );
+    res.json(updateProduct);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
 
+//delete product
+const deleteProduct = asyncHandler(async (req, res) => {
+    const id = req.params;
+    // validateMongoDbId(id);
+    try {
+      const deleteProduct = await productModel.findOneAndDelete(id);
+      res.json(deleteProduct);
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
 
-}
-const getproduct=async(req,resp)=>{
-    const productData=await productModel.find()
-    console.log(productData)
-    resp.json({sucess:true,message:'details fetced',productData})
-}
+//get all product
+const getAllProduct = asyncHandler(async (req, res) => {
+    try {
+      // Filtering
+      const queryObj = { ...req.query };
+      const excludeFields = ["page", "sort", "limit", "fields"];
+      excludeFields.forEach((el) => delete queryObj[el]);
+        // console.log(queryObj);
+      let queryStr = JSON.stringify(queryObj);
+      queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+  
+      let query = productModel.find(JSON.parse(queryStr));
+  
+      // Sorting   ?sort=category.brand
+  
+      if (req.query.sort) {
+        const sortBy = req.query.sort.split(",").join(" ");
+        query = query.sort(sortBy);
+      } else {
+        query = query.sort("-createdAt");  //display created date
+      }
+  
+      // limiting the fields   ?fields=title,price,category gives only provided,    ?fields=-title,-price,-category  gives all leaving mentioned
+  
+      if (req.query.fields) {
+        const fields = req.query.fields.split(",").join(" ");
+        query = query.select(fields);
+      } else {
+        query = query.select("-__v");
+      }
+  
+      // pagination ?page=1&limit=3   gives page and products
+  
+      const page = req.query.page;
+      const limit = req.query.limit;
+      const skip = (page - 1) * limit;
+      query = query.skip(skip).limit(limit);
+      if (req.query.page) {
+        const productCount = await productModel.countDocuments();
+        if (skip >= productCount) throw new Error("This Page does not exists");
+      }
+      const product = await query;
+      res.json(product);
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
+  
+//get a single product
+const getaProduct = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  try {
+    const findProduct = await productModel.findById(id);
+    res.json(findProduct);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
 
-// const createProductController = async(req,res)=>{
-//     try {
-//         const {name,description,price,category,quantity} = req.fields         
-//         switch(true){
-//             case !name:
-//                 return res.status(500).send({error:'Name is required'})
-//             case !description:
-//                 return res.status(500).send({error:'Descriptioon is required'})
-//             case !price:
-//                 return res.status(500).send({error:'Price is required'})
-//             case !category:
-//                 return res.status(500).send({error:'Category is required'})
-//             case !quantity:
-//                 return res.status(500).send({error:'Quantity is required'}) 
-          
-//         }
- 
-//         const products = new productModel({...req.fields})
-
-//         await products.save()
-//         res.status(201).send({
-//             success:true,
-//             message:"Product Created Successfully",
-//             products
-//         })
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).send({
-//             success:false,
-//             error,
-//             message:'Error in creating product'
-//         })
-        
-//     }
-// }
-
-//get all products
-// const getProductControleer = async(req,res) =>{
-//     try {
-//         const products = await productModel.find({}).populate('category').limit(12).sort({createdAt:-1})
-//         res.status(200).send({
-//             success:true,
-//             countTotal:products.length,
-//             message:'All Products', 
-//             products
-//         })
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).send({
-//             success:false,
-//             message:'Error in getting products',
-//             error: error.message
-//         })
-//     }
-
-// }
-
-//GET SINGLE PRODUCT
-// const getSingleProductController = async(req,res)=>{
-//     try {
-//         const product = await productModel.findOne({slug:req.params.slug}).populate('category')
-//         res.status(200).send({
-//             success:true,
-//             message:"Single product successfully fetched",
-//             product
-//         })
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).send({
-//             success:false,
-//             message:"Error while getting single product"
-//         })
-//     }
-
-// }
-
-//DELETE PRODUCT
-// const deleteProductController = async (req,res)=>{
-//     try {
-//        // const {id} = req.params
-//         await productModel.findByIdAndDelete(req.params.pid)
-//         res.status(200).send({
-//             success:true,
-//             message:"Product deleted successfully"
-//         })
-        
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).send({
-//             success:false,
-//             message:"Error while deleting product"
-//         })
-//     }
-
-// }
-
-//UPDATE PRODUCT 
-// const updateProductController =  async(req,res)=>{
-//     try {
-//         const {name,slug,description,price,category,quantity,shipping} = req.fields    
-//         switch(true){
-//             case !name:
-//                 return res.status(500).send({error:'Name is required'})
-//             case !description:
-//                 return res.status(500).send({error:'Descriptioon is required'})
-//             case !price:
-//                 return res.status(500).send({error:'Price is required'})
-//             case !category:
-//                 return res.status(500).send({error:'Category is required'})
-//             case !quantity:
-//                 return res.status(500).send({error:'Quantity is required'}) 
-//          //   case !photo && photo.size >1000000:
-//          //       return res.status(500).send({error:'Photo is required and should be less then 1mb'})          
-//         }
-        
-
-//         const products = await productModel.findByIdAndUpdate(req.params.pid,
-//             {...req.fields,slug:slugify(name)},
-//             {new:true}
-//             );
-//             await products.save();
-//             res.status(201).send({
-//                 success:true,
-//                 message:"Product updated successfully",
-//                 products
-//             })
-        
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).send({
-//             success:false,
-//             message:"Error while updating product"
-//         })
-//     }
-
-// }
-
-//FILTER PRODUCT
-// const productFiltersController = async (req,res)=>{
-//     try {
-//         const {} = productModel
-        
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).send({
-//             success:false,
-//             message:'Error while filtering products',
-//             error
-//         })
-//     }
-
-// }
-
-//PRODUCT COUNT
-// const productCountController = async (req,res)=>{
-//     try {
-//         const total = await productModel.find({}).estimatedDocumentCount()
-//         res.status(200).send({
-//             success:true,
-//             total
-//         })
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).send({
-//             success:true,
-//             message:"Error while Counting Products",
-//             error
-//         })
-//     }
-
-// }
-
-//PRODUCT LIST BASED ON PAGE
-// const productListController =  async (req,res)=>{
-//     try {
-//         const perPage = 6;
-//         const page = req.params.page ? req.params.page : 1
-//         const products = await productModel
-//         .find({})
-//         .skip((page-1)*perPage)
-//         .limit(perPage)
-//         .sort({createdAt:-1})
-//         res.status(200).send({
-//             success:true,
-//             products
-//         })
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).send({
-//             success:false,
-//             message:'Error in per page controller',
-//             error
-            
-//         })
-//     }
-// }
-
-//SEARCH PRODUCT
-// const searchProductController = async(req,res)=>{
-//     try {
-//         const {keyword} = req.params
-
-//         const result = await productModel.find({
-//             $or: [
-//                 {name:{$regex :keyword, $options:"i"}}, //here "i" : case insesitive
-//                 {description:{$regex :keyword, $options:"i"}}
-//             ]
-//         })
-//         res.json(results)
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).send({
-//             success:false,
-//             message:"Error while searching products",
-//             error
-//         })
-//     }
-
-// }
-
-//SIMILAR PRODUCT
-// const relatedProductController = async (req,res)=>{
-//     try {
-//         const {pid,cid} =  req.params
-//         const products = await productModel.find({
-//             category:cid,
-//             _id:{$ne:pid}                //$ne - not-include
-//         }).limit(5).populate('category')
-//         res.status(200).send({
-//             success:true,
-//             products
-//         })
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).send({
-//             success:true,
-//             message:"Error while fetching simllar products",
-//             error
-//         })
-//     }
-
-// }
-
-//GET PRODUCTS BY CATEGORY
-// const productCategoryController = async (req,res)=>{
-//     try {
-//         const category = await categoryModel.findOne({slug:req.params.slug})
-//         const products  = await productModel.find ({category}).populate('category')
-//         res.status(200).send({
-//             success:true,
-//             category,
-//             products
-//         })
-        
-//     } catch (error) {
-//        console.log(error)
-//        res.status(500).send({
-//         success:false,
-//         message:"Failed to get products by category",
-//         error
-//        }) 
-//     }
-
-// }
-
-
-// const addtoCart = async(req,res)=>{
-//     const data = req.body;
-//     const res= await productModel.create(data)
-// }
- 
-// module.exports ={ createProductController, 
-//     deleteProductController, 
-//     getProductControleer, 
-//     getSingleProductController,
-//     productCategoryController,
-//     productCountController,
-//     productFiltersController,
-//     productListController, 
-//     relatedProductController, 
-//     searchProductController, 
-//     updateProductController 
-// }
-
-module.exports={getproduct,createproduct}
+module.exports = { createProduct, updateProduct,deleteProduct,getAllProduct,getaProduct };

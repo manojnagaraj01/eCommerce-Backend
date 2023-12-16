@@ -1,5 +1,10 @@
 const router = require("express").Router()
-const {registerController,loginController,testController, forgotPasswordController, updateProfileController} = require('../controllers/authController.js');
+const {registerController,loginController, getalluser, deleteUser,
+    getSingleUser,blockUser,unblockUser,
+    updateUser,userCart,getUserCart,
+    handleRefreshToken,emptyCart,createOrder,
+    getOrders,updateOrderStatus,
+    logout} = require('../controllers/authController.js');
 const {requireSignIn , isAdmin} = require('../middlewares/authMiddleware.js');
 
 
@@ -10,24 +15,52 @@ router.post("/register", registerController);
 //LOGIN || POST METHOD
 router.post("/login", loginController);
 
-//FORGOT PASSWORD
-router.post("/forgot-password", forgotPasswordController);
+//usercart
+router.post("/addcart", requireSignIn, userCart);
 
-//test routes
-router.get('/test', requireSignIn, isAdmin, testController);
+//create order
+router.post("/cart/cash-order", requireSignIn, createOrder);
 
-//PROTECTED USER ROUTE AUTH
-router.get('/user-auth', requireSignIn, (req,res)=>{
-    res.status(200).send({ok:true})
-})
 
-//PROTECTED ADMIN ROUTE AUTH
-router.get('/admin-auth', requireSignIn, isAdmin, (req,res)=>{
-    res.status(200).send({ok:true})
-})
+//
+router.put("/update-order/:id", requireSignIn, isAdmin,updateOrderStatus);
 
-//UPDATE PROFILE
-router.put('/update-profile', requireSignIn, updateProfileController)
+//getalluser
+router.get("/get-allusers", getalluser)
+
+//get order
+router.get("/get-orders", requireSignIn, getOrders);
+//refresh
+router.get("/refresh",handleRefreshToken);
+
+//logout
+router.get("/logout",logout);
+
+
+// get user cart
+router.get("/cart", requireSignIn, getUserCart);
+
+//getSingleuser
+router.get("/:id", requireSignIn,isAdmin,getSingleUser)
+
+
+
+//emptycart
+router.delete("/empty", requireSignIn,emptyCart);
+
+//deleteeuser
+router.delete("/:id", deleteUser)
+
+
+
+//updateuser
+router.put("/edit-user", requireSignIn,isAdmin ,updateUser);
+
+//block
+router.put("/block-user/:id", requireSignIn, isAdmin,blockUser);
+
+//unblock
+router.put("/unblock-user/:id", requireSignIn, isAdmin,unblockUser);
 
 
 

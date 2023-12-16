@@ -1,63 +1,27 @@
 
 const router = require("express").Router()
-const {getproduct,createproduct}=require('../controllers/productController')
+const {createProduct,updateProduct,deleteProduct,getaProduct,getAllProduct}=require('../controllers/productController')
 
 
-// const { isAdmin, requireSignIn } = require("../middlewares/authMiddleware.js");
+const { isAdmin, requireSignIn } = require("../middlewares/authMiddleware.js");
 
-// const { createProductController, 
-//     deleteProductController, 
-//     getProductControleer, 
-//     getSingleProductController,
-//     productCategoryController,
-//     productCountController,
-//     productFiltersController,
-//     productListController, 
-//     relatedProductController, 
-//     searchProductController, 
-//     updateProductController 
-// } =  require("../controllers/productController.js");
 
 //get all products
 
-router.get("/productdetails",getproduct)
-router.post("/createproduct",createproduct)
+router.post("/",requireSignIn,isAdmin,createProduct)
+// router.post("/createproduct",createproduct)
 
-//routes
-//CREATE PRODUCTS
-// router.post("/create-product",requireSignIn,isAdmin, createProductController);
-
-//GET ALL PRODUCTS
-// router.get("/get-product", getProductControleer);
+//GET Single PRODUCTS
+router.get("/",getAllProduct);
 
 //GET SINGLE-PRODUCT
-// router.get("/get-product/:slug",  getSingleProductController);
+router.get("/:id",getaProduct);
+
+//update a product
+router.put("/:id",requireSignIn,isAdmin,updateProduct);
 
 //DELETE PRODUCT
-// router.delete("/delete-product/:pid", requireSignIn,isAdmin, deleteProductController);
-
-//UPDATE PRODUCT
-// router.patch('/update-product/:pid', requireSignIn,isAdmin, updateProductController);
-
-//FILTER PRODUCT
-// router.post('/product-filter', productFiltersController)
-
-//PRODUCT COUNT
-// router.get('/product-count',productCountController);
-
-//PRODUCT PER PAGE
-// router.get("/product-list/:page", productListController);
-
-//SEARCH PRODUCT
-// router.get("/search/:keyword", searchProductController);
-
-//SIMILAR PRODUCT
-// router.get("/related-product/:pid/:cid", relatedProductController);
-
-//CATEGORY WISE PRODUCT
-// router.get("/product-category/:slug", productCategoryController);
-
-// export default router;
+router.delete("/:id", requireSignIn,isAdmin,deleteProduct);
 
 
 module.exports=router

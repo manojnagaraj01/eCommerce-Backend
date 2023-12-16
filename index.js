@@ -1,10 +1,10 @@
 const express = require("express");
 const dotenv = require("dotenv");
-
-
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser")
+const morgan = require("morgan")
 //rest object
-const app= express();
-const {connectDB, databaseName} = require("./config/db.js")
+
 
 const cors = require("cors")
 
@@ -15,24 +15,44 @@ const productroute = require('./routes/productRoutes.js')
 
 //configure evv
 dotenv.config();
-const PORT =process.env.PORT
+
+
+const {connectDB} = require("./config/db.js");
+const { notFound, errorHandler } = require("./middlewares/errorHandler.js");
+
+const PORT =process.env.PORT || 9000
+
+
+const app= express();
+
+
 
 
 
 //middlewares
+app.use(morgan())
+app.use(bodyParser.json());
 app.use(express.json());
+app.use(express.urlencoded({extended:false}));
+app.use(cookieParser())
 app.use(cors({
     origin:'*'
 }))
+
 //routes
-app.use('/api/auth', authRoutes);
-app.use('/api/product',productroute );
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/product',productroute );
+
+
 
 //rest api
 app.get("/", (req,res)=>{
     res.send("<h1>Welcome to ECommerce Website</h1>");
 })
 
+
+app.use(notFound)
+app.use(errorHandler)
 app.listen(PORT, async()=>{
     try{
         await connectDB()

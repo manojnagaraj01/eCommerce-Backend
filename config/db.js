@@ -4,7 +4,7 @@ mongoose.set("strictQuery", true)
 
 const connectDB = async () =>{
     try{
-        const conn = await mongoose.connect(process.env.MONGO_URL);
+        const conn = await mongoose.connect("mongodb+srv://manoj7778:test123@cluster0.9zmdjc5.mongodb.net/ecommerce?retryWrites=true&w=majority");
         console.log(`Connected to MongoDB`)
 
     } catch(error){

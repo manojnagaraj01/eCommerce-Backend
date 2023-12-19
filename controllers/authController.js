@@ -228,7 +228,8 @@ const userCart = asynchandler(async (req, res) => {
     // check if user already have product in cart
     const alreadyExistCart = await Cart.findOne({ orderby: user._id });
     if (alreadyExistCart) {
-      alreadyExistCart.remove();
+      alreadyExistCart
+      console.log('deleted')
     }
     for (let i = 0; i < cart.length; i++) {
       let object = {};
@@ -260,7 +261,7 @@ const getUserCart = asynchandler(async (req, res) => {
   validateMongooseId(_id);
   try {
     const cart = await Cart.findOne({ orderby: _id }).populate(
-      "products.product"
+      "products"
     );
     res.json(cart);
   } catch (error) {
@@ -359,6 +360,21 @@ const updateOrderStatus = asynchandler(async (req, res) => {
   }
 });
 
+//get cartitems 
+
+const getcartitems=async(req,resp)=>{
+  const {_id}=req.user
+  const findcart= await Cart.find({orderby:_id})
+  console.log('findcart',findcart)
+  if(findcart){
+    resp.json(findcart)
+
+  }
+  else{
+    resp.json({message:'Unable to find the cart'})
+  }
+}
+
 module.exports = {
   profile,
   registerController,
@@ -370,5 +386,6 @@ module.exports = {
   blockUser,
   unblockUser,
   handleRefreshToken,logout,userCart,getUserCart,emptyCart,createOrder,
-  getOrders,updateOrderStatus
+  getOrders,updateOrderStatus,
+  getcartitems
 };

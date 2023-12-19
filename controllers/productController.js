@@ -101,8 +101,11 @@ const getAllProduct = asyncHandler(async (req, res) => {
 //get a single product
 const getaProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
+  // console.log(id)
   try {
     const findProduct = await productModel.findById(id);
+    console.log(findProduct)
     res.json(findProduct);
   } catch (error) {
     throw new Error(error);

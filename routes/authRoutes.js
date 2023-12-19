@@ -4,7 +4,7 @@ const {registerController,loginController, getalluser, deleteUser,
     updateUser,userCart,getUserCart,
     handleRefreshToken,emptyCart,createOrder,
     getOrders,updateOrderStatus,
-    logout} = require('../controllers/authController.js');
+    logout,getcartitems} = require('../controllers/authController.js');
 const {requireSignIn , isAdmin} = require('../middlewares/authMiddleware.js');
 
 
@@ -21,6 +21,8 @@ router.post("/addcart", requireSignIn, userCart);
 //create order
 router.post("/cart/cash-order", requireSignIn, createOrder);
 
+//getcartitems
+router.get("/getcartitems",requireSignIn,getcartitems)
 
 //
 router.put("/update-order/:id", requireSignIn, isAdmin,updateOrderStatus);

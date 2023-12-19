@@ -5,12 +5,16 @@ const asyncHandler = require("express-async-handler")
 //PROTECTED ROUTES TOKEN BASE
 const requireSignIn = asyncHandler(async (req, res, next) => {
   let token;
-  if (req?.headers?.authorization?.startsWith("Bearer")) {
-    token = req.headers.authorization.split(" ")[1];
+  // console.log(req.body.headers)
+  const {authorization}=req.headers
+  // console.log(authorization)
+  if (authorization) {
+    token = authorization.split(" ")[1];
+    console.log(token)
     try {
         if (token) {
         const decode = JWT.verify(token, process.env.JWT_SECRET);
-        console.log(decode)
+        // console.log(decode)
         const user = await userCollection.findById(decode?.id);
         req.user = user;
         next();

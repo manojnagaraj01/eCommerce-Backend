@@ -398,7 +398,6 @@ module.exports = {
   updateUser,
   blockUser,
   unblockUser,
-  handleRefreshToken,logout,userCart,getUserCart,emptyCart,createOrder,
-  getOrders,updateOrderStatus,
+  handleRefreshToken,logout,userCart,getUserCart,emptyCart,
   getcartitems
 };

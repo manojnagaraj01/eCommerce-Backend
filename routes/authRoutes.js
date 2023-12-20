@@ -2,8 +2,7 @@ const router = require("express").Router()
 const {registerController,loginController, getalluser, deleteUser,
     getSingleUser,blockUser,unblockUser,
     updateUser,userCart,getUserCart,
-    handleRefreshToken,emptyCart,createOrder,
-    getOrders,updateOrderStatus,
+    handleRefreshToken,emptyCart,
     logout,getcartitems} = require('../controllers/authController.js');
 const {requireSignIn , isAdmin} = require('../middlewares/authMiddleware.js');
 
@@ -19,19 +18,19 @@ router.post("/login", loginController);
 router.post("/addcart", requireSignIn, userCart);
 
 //create order
-router.post("/cart/cash-order", requireSignIn, createOrder);
+// router.post("/cart/cash-order", requireSignIn, createOrder);
 
 //getcartitems
 router.get("/getcartitems",requireSignIn,getcartitems)
 
 //
-router.put("/update-order/:id", requireSignIn, isAdmin,updateOrderStatus);
+// router.put("/update-order/:id", requireSignIn, isAdmin,updateOrderStatus);
 
 //getalluser
 router.get("/get-allusers", getalluser)
 
 //get order
-router.get("/get-orders", requireSignIn, getOrders);
+// router.get("/get-orders", requireSignIn, getOrders);
 //refresh
 router.get("/refresh",handleRefreshToken);
 

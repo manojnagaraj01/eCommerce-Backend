@@ -48,7 +48,7 @@ router.get("/:id", requireSignIn,isAdmin,getSingleUser)
 
 
 //emptycart
-router.delete("/empty", requireSignIn,emptyCart);
+router.delete("/:id", requireSignIn,emptyCart);
 
 //deleteeuser
 router.delete("/:id", deleteUser)

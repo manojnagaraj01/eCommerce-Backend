@@ -39,6 +39,7 @@ const loginController = asynchandler(async (req, res) => {
   // check if user exists or not
   const findUser = await userCollection.findOne({ email });
   if (findUser && (await findUser.isPasswordMatched(password))) {
+    const accessToken = generateToken(findUser._id);
     const refreshToken = await generateRefreshToken(findUser?._id);
     const upadteUser = await userCollection.findByIdAndUpdate(findUser.id, 
       {refreshToken:refreshToken},
@@ -237,7 +238,14 @@ const userCart = asynchandler(async (req, res) => {
       object.count = cart[i].count;
       let getPrice = await productModel.findById(cart[i]._id).select("price").exec();
       object.price = getPrice.price;
+      let getImage = await productModel.findById(cart[i]._id).select("images").exec();
+      object.images = getImage.images[0].imageOne;
+      let getTitle = await productModel.findById(cart[i]._id).select("title").exec();
+      object.title = getTitle.title;
       products.push(object);
+
+      // console.log(getImage.images[0].imageOne)
+      // console.log(getTitle.title);
     }
     // console.log(products)
     let cartTotal = 0;
@@ -248,8 +256,10 @@ const userCart = asynchandler(async (req, res) => {
       products,
       cartTotal,
       orderby: user?._id,
-    }).save();
+    })
+    await newCart.save();
     res.json(newCart);
+    // console.log(newCart)
   } catch (error) {
     throw new Error(error);
   }
@@ -272,10 +282,14 @@ const getUserCart = asynchandler(async (req, res) => {
 //empty cart
 const emptyCart = asynchandler(async (req, res) => {
   const { _id } = req.user;
+  const {id}=req.params
+  // console.log(req.params)
   validateMongooseId(_id);
+  console.log('empty working')
   try {
     const user = await userCollection.findOne({ _id });
-    const cart = await Cart.findOneAndRemove({ orderby: user._id });
+    const cart = await Cart.findByIdAndDelete(id);
+    console.log('empty cart',cart);
     res.json(cart);
   } catch (error) {
     throw new Error(error);
@@ -283,92 +297,91 @@ const emptyCart = asynchandler(async (req, res) => {
 });
 
 
-const createOrder = asynchandler(async (req, res) => {
-  const { COD} = req.body;
-  const { _id } = req.user;
-  validateMongooseId(_id);
-  try {
-    if (!COD) throw new Error("Create cash order failed");
-    const user = await userCollection.findById(_id);
-    let userCart = await Cart.findOne({ orderby: user._id });
-    let finalAmout = 0;
-    if (userCart.cartTotal) {
-      finalAmout = userCart.cartTotal;
-    }
-    let newOrder = await new Order({
-      products: userCart.products,
-      paymentIntent: {
-        id: uniqid(),
-        method: "COD",
-        amount: finalAmout,
-        status: "Cash on Delivery",
-        created: Date.now(),
-        currency: "usd",
-      },
-      orderby: user._id,
-      orderStatus: "Cash on Delivery",
-    }).save();
-    let update = userCart.products.map((item) => {
-      return {
-        updateOne: {
-          filter: { _id: item.product._id },
-          update: { $inc: { quantity: -item.count, sold: +item.count } },
-        },
-      };
-    });
-    const updated = await productModel.bulkWrite(update, {});
-    res.json({ message: "success" });
-  } catch (error) {
-    throw new Error(error);
-  }
-});
+// const createOrder = asynchandler(async (req, res) => {
+//   const { COD} = req.body;
+//   const { _id } = req.user;
+//   validateMongooseId(_id);
+//   try {
+//     if (!COD) throw new Error("Create cash order failed");
+//     const user = await userCollection.findById(_id);
+//     let userCart = await Cart.findOne({ orderby: user._id });
+//     let finalAmout = 0;
+//     if (userCart.cartTotal) {
+//       finalAmout = userCart.cartTotal;
+//     }
+//     let newOrder = await new Order({
+//       products: userCart.products,
+//       paymentIntent: {
+//         id: uniqid(),
+//         method: "COD",
+//         amount: finalAmout,
+//         status: "Cash on Delivery",
+//         created: Date.now(),
+//         currency: "usd",
+//       },
+//       orderby: user._id,
+//       orderStatus: "Cash on Delivery",
+//     }).save();
+//     let update = userCart.products.map((item) => {
+//       return {
+//         updateOne: {
+//           filter: { _id: item.product._id },
+//           update: { $inc: { quantity: -item.count, sold: +item.count } },
+//         },
+//       };
+//     });
+//     const updated = await productModel.bulkWrite(update, {});
+//     res.json({ message: "success" });
+//   } catch (error) {
+//     throw new Error(error);
+//   }
+// });
 
 //get orders
-const getOrders = asynchandler(async (req, res) => {
-  const { _id } = req.user;
-  validateMongooseId(_id);
-  try {
-    const userorders = await Order.findOne({ orderby: _id })
-      .populate("products.product")
-      .populate("orderby")
-      .exec();
-    res.json(userorders);
-  } catch (error) {
-    throw new Error(error);
-  }
-});
+// const getOrders = asynchandler(async (req, res) => {
+//   const { _id } = req.user;
+//   validateMongooseId(_id);
+//   try {
+//     const userorders = await Order.findOne({ orderby: _id })
+//       .populate("products.product")
+//       .populate("orderby")
+//       .exec();
+//     res.json(userorders);
+//   } catch (error) {
+//     throw new Error(error);
+//   }
+// });
 
 //Update order status
-const updateOrderStatus = asynchandler(async (req, res) => {
-  const { status } = req.body;
-  const { id } = req.params;
-  validateMongooseId(id);
-  try {
-    const updateOrderStatus = await Order.findByIdAndUpdate(
-      id,
-      {
-        orderStatus: status,
-        paymentIntent: {
-          status: status,
-        },
-      },
-      { new: true }
-    );
-    res.json(updateOrderStatus);
-  } catch (error) {
-    throw new Error(error);
-  }
-});
+// const updateOrderStatus = asynchandler(async (req, res) => {
+//   const { status } = req.body;
+//   const { id } = req.params;
+//   validateMongooseId(id);
+//   try {
+//     const updateOrderStatus = await Order.findByIdAndUpdate(
+//       id,
+//       {
+//         orderStatus: status,
+//         paymentIntent: {
+//           status: status,
+//         },
+//       },
+//       { new: true }
+//     );
+//     res.json(updateOrderStatus);
+//   } catch (error) {
+//     throw new Error(error);
+//   }
+// });
 
 //get cartitems 
 
 const getcartitems=async(req,resp)=>{
   const {_id}=req.user
   const findcart= await Cart.find({orderby:_id})
-  console.log('findcart',findcart)
+  // console.log('findcart',findcart)
   if(findcart){
     resp.json(findcart)
-
   }
   else{
     resp.json({message:'Unable to find the cart'})

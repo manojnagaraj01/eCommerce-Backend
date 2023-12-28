@@ -11,6 +11,7 @@ const cors = require("cors")
 //routes import
 const authRoutes= require('./routes/authRoutes.js');
 const productroute = require('./routes/productRoutes.js')
+const paypalroute=require('./routes/paypalroute.js')
 
 
 //configure evv
@@ -42,6 +43,8 @@ app.use(cors({
 //routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/product',productroute );
+app.use('/api/v1/order',paypalroute)
+
 
 
 
